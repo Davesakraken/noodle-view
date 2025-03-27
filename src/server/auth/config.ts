@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
+import EmailProvider from "next-auth/providers/nodemailer";
 
 import { db } from "@/server/db";
 
@@ -32,7 +33,24 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
+    EmailProvider({
+      server: {
+        host: process.env.EMAIL_SERVER_HOST ?? "https://localhost:3000",
+        port: 587,
+        auth: {
+          user: "apikey",
+          pass: process.env.EMAIL_SERVER_PASSWORD ?? "",
+        },
+      },
+      from: process.env.EMAIL_FROM ?? "default@default.com",
+      ...(process.env.NODE_ENV !== "production" && {
+        sendVerificationRequest({ url }) {
+          console.log("login link", url);
+        },
+      }),
+    }),
     DiscordProvider,
+
     /**
      * ...add more providers here.
      *
